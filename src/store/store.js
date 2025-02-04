@@ -1,7 +1,10 @@
-import { createStore } from 'redux'
+import { applyMiddleware, createStore } from 'redux'
+import { composeWithDevTools } from '@redux-devtools/extension';
+import { thunk } from 'redux-thunk';
 
 const ADD_TASK = "task/add"
 const DELETE_TASK = "task/delete"
+const FETCH_TASKS = "task/fetch"
 
 const initialState = {
   task: [],
@@ -22,6 +25,12 @@ const reducer  = (state = initialState, action) => {
           return index != action.payload
         })
       }
+
+      case FETCH_TASKS:
+        return {
+          ...state,
+          task: [...state.task, ...action.payload]
+        }
       
     default:
       return state
@@ -35,8 +44,28 @@ export const addTask = (data) => {
 export const deleteTask = (id) => {
   return {type: DELETE_TASK, payload: id}
 }
+
+export const fetchTasks = () => {
+  return async (dispatch) => {
+    try{
+      const res = await fetch(
+        "https://jsonplaceholder.typicode.com/todos?_limit=3"
+      )
+
+      const tasks = await res.json()
+
+      dispatch({
+        type: FETCH_TASKS,
+        payload: tasks.map((currEle) => currEle.title) 
+      })
       
-export const store = createStore(reducer)
+    } catch (err){
+      console.log(err)
+    }
+  }
+}
+      
+export const store = createStore(reducer, composeWithDevTools(applyMiddleware(thunk)))
 
 // Getting the initial state
 console.log("Initial State: ", store.getState())
